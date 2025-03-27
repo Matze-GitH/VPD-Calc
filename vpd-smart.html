@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>KleinGärtnerCommunity VPD-Rechner</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="VPD-Rechner">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+      background: #f0f4f3;
+    }
+    input, select, button {
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+      font-size: 1em;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 10px;
+      font-size: 1.1em;
+    }
+    .green { background-color: #d4edda; color: #155724; }
+    .orange { background-color: #fff3cd; color: #856404; }
+    .red { background-color: #f8d7da; color: #721c24; }
+    h2 {
+      text-align: center;
+      color: #2a6d4f;
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🌿 KleinGärtnerCommunity VPD-Rechner</h2>
+
+  <label>🌡️ Temperatur (°C):</label>
+  <input type="number" id="temp" placeholder="z.B. 26">
+
+  <label>💧 Luftfeuchtigkeit (%):</label>
+  <input type="number" id="rh" placeholder="z.B. 60">
+
+  <label>🌱 Wachstumsphase:</label>
+  <select id="phase">
+    <option value="propagation">🧬 Propagation / Early Veg</option>
+    <option value="veg">🌿 Late Veg / Early Flower</option>
+    <option value="flower">🌸 Mid / Late Flower</option>
+  </select>
+
+  <button onclick="vpdTool()">Berechnen</button>
+
+  <div id="ergebnis" class="result"></div>
+
+  <script>
+    function vpdTool() {
+      const temp = parseFloat(document.getElementById("temp").value);
+      const rh = parseFloat(document.getElementById("rh").value);
+      const phase = document.getElementById("phase").value;
+      const ergebnis = document.getElementById("ergebnis");
+
+      const zielVPD = {
+        propagation: 0.7,
+        veg: 1.05,
+        flower: 1.35
+      };
+
+      const vpdZiel = zielVPD[phase];
+
+      function getSVP(t) {
+        return 0.6108 * Math.exp((17.27 * t) / (t + 237.3));
+      }
+
+      if (!isNaN(temp) && !isNaN(rh)) {
+        const svp = getSVP(temp);
+        const avp = svp * (rh / 100);
+        const vpd = (svp - avp).toFixed(2);
+        const vpdNum = parseFloat(vpd);
+        let klasse = '', bewertung = '';
+        const diff = Math.abs(vpd - vpdZiel);
+
+        if (diff <= 0.1) {
+          klasse = 'green'; bewertung = '✅ Optimal für diese Phase';
+        } else if (diff <= 0.25) {
+          klasse = 'orange'; bewertung = '⚠️ Nahe am Zielwert, könnte besser sein';
+        } else {
+          klasse = 'red'; bewertung = '⛔ Nicht ideal für diese Phase';
+        }
+
+        ergebnis.className = `result ${klasse}`;
+        ergebnis.innerHTML = `📈 VPD: <strong>${vpd} kPa</strong><br>Ziel-VPD (${phase}): <strong>${vpdZiel} kPa</strong><br><br>${bewertung}`;
+        return;
+      }
+
+      if (!isNaN(temp) && isNaN(rh)) {
+        const svp = getSVP(temp);
+        const rhIdeal = ((svp - vpdZiel) / svp) * 100;
+        ergebnis.className = `result green`;
+        ergebnis.innerHTML = `🌡️ Temp: ${temp}°C<br>🎯 Ziel-VPD für ${phase}: ${vpdZiel} kPa<br><br>➕ <strong>Empfohlene Luftfeuchtigkeit: ${Math.round(rhIdeal)}%</strong>`;
+        return;
+      }
+
+      if (isNaN(temp) && !isNaN(rh)) {
+        let tIdeal = null;
+        for (let t = 15; t <= 35; t += 0.1) {
+          const svp = getSVP(t);
+          const avp = svp * (rh / 100);
+          const vpd = svp - avp;
+          if (Math.abs(vpd - vpdZiel) < 0.05) {
+            tIdeal = t;
+            break;
+          }
+        }
+
+        if (tIdeal) {
+          ergebnis.className = `result green`;
+          ergebnis.innerHTML = `💧 RH: ${rh}%<br>🎯 Ziel-VPD für ${phase}: ${vpdZiel} kPa<br><br>➕ <strong>Empfohlene Temperatur: ${tIdeal.toFixed(1)}°C</strong>`;
+        } else {
+          ergebnis.className = `result red`;
+          ergebnis.innerHTML = "⚠️ Keine passende Temperatur gefunden (zwischen 15–35°C)";
+        }
+        return;
+      }
+
+      ergebnis.className = `result red`;
+      ergebnis.innerHTML = "❗ Bitte gib mindestens Temperatur oder Luftfeuchtigkeit ein.";
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>
