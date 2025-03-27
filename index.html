@@ -1,27 +1,31 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KleinGärtnerCommunity VPD-Rechner</title>
-  <base href="/VPD-Rechner/">
-  <link rel="manifest" href="manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="VPD-Rechner">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="VPD-Rechner" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       padding: 20px;
-      max-width: 700px;
-      margin: auto;
+      margin: 0;
       background: #f0f4f3;
+      max-width: 500px;
+      margin: auto;
     }
     input, select, button {
-      padding: 10px;
+      padding: 14px;
       margin: 10px 0;
       width: 100%;
       font-size: 1em;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
     }
     .result {
       margin-top: 20px;
@@ -40,14 +44,13 @@
   </style>
 </head>
 <body>
-
   <h2>🌿 KleinGärtnerCommunity VPD-Rechner</h2>
 
   <label>🌡️ Temperatur (°C):</label>
-  <input type="number" id="temp" placeholder="z.B. 26">
+  <input type="number" id="temp" placeholder="z.B. 26" inputmode="decimal" />
 
   <label>💧 Luftfeuchtigkeit (%):</label>
-  <input type="number" id="rh" placeholder="z.B. 60">
+  <input type="number" id="rh" placeholder="z.B. 60" inputmode="decimal" />
 
   <label>🌱 Wachstumsphase:</label>
   <select id="phase">
@@ -83,14 +86,13 @@
         const svp = getSVP(temp);
         const avp = svp * (rh / 100);
         const vpd = (svp - avp).toFixed(2);
-        const vpdNum = parseFloat(vpd);
-        let klasse = '', bewertung = '';
         const diff = Math.abs(vpd - vpdZiel);
+        let klasse = '', bewertung = '';
 
         if (diff <= 0.1) {
           klasse = 'green'; bewertung = '✅ Optimal für diese Phase';
         } else if (diff <= 0.25) {
-          klasse = 'orange'; bewertung = '⚠️ Nahe am Zielwert, könnte besser sein';
+          klasse = 'orange'; bewertung = '⚠️ Nahe am Zielwert';
         } else {
           klasse = 'red'; bewertung = '⛔ Nicht ideal für diese Phase';
         }
@@ -125,13 +127,13 @@
           ergebnis.innerHTML = `💧 RH: ${rh}%<br>🎯 Ziel-VPD für ${phase}: ${vpdZiel} kPa<br><br>➕ <strong>Empfohlene Temperatur: ${tIdeal.toFixed(1)}°C</strong>`;
         } else {
           ergebnis.className = `result red`;
-          ergebnis.innerHTML = "⚠️ Keine passende Temperatur gefunden (zwischen 15–35°C)";
+          ergebnis.innerHTML = "⚠️ Keine passende Temperatur gefunden (15–35°C)";
         }
         return;
       }
 
       ergebnis.className = `result red`;
-      ergebnis.innerHTML = "❗ Bitte gib mindestens Temperatur oder Luftfeuchtigkeit ein.";
+      ergebnis.innerHTML = "❗ Bitte gib Temperatur oder Luftfeuchtigkeit ein.";
     }
 
     if ('serviceWorker' in navigator) {
